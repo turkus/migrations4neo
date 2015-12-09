@@ -1,0 +1,5 @@
+*.pyc
+*.swp
+
+env/
+migrations4neo/mig4neo/
