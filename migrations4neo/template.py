@@ -1,6 +1,9 @@
-body = """from py2neo import Graph
+body = '''# -*- coding: utf-8 -*-
+import os
 
-graph = Graph()
+from py2neo import Graph
+
+graph = Graph(os.getenv('NEO4J_REST_URL'))
 cypher = graph.cypher
 
 
@@ -8,9 +11,9 @@ cypher = graph.cypher
 
 
 def up():
-    cypher.execute("")
+    cypher.execute(""" """)
 
 
 def down():
-    cypher.execute("")
-"""
+    cypher.execute(""" """)
+'''

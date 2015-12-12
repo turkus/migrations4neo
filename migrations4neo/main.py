@@ -1,5 +1,6 @@
 import binascii
 import ConfigParser
+import imp
 import os
 import argparse
 
@@ -13,8 +14,10 @@ from . import utils
 PARSER_INIT = 'init'
 PARSER_REVISION = 'revision'
 PARSER_UPGRADE = 'upgrade'
+PARSER_DOWNGRADE = 'downgrade'
 
-PARSER_NAMES = [PARSER_INIT, PARSER_REVISION, PARSER_UPGRADE]
+MIGRATION_PARSERS = [PARSER_UPGRADE, PARSER_DOWNGRADE]
+PARSER_NAMES = [PARSER_INIT, PARSER_REVISION] + MIGRATION_PARSERS
 
 MIG4NEO_DIR = 'mig4neo'
 
@@ -26,6 +29,18 @@ FOLDER_PATHS = [MIG4NEO_PATH, REVISIONS_PATH]
 INI_PATH = os.path.join(package_dir, MIG4NEO_DIR, 'mig4neo.ini')
 INI_SECTION = 'mig4neo'
 INI_DB_KEY = 'neo4j.db_uri'
+
+CANNOT_FIND = """
+!!!!!!!!!!!!!
+ERROR: Cannot find revisions: {}'
+!!!!!!!!!!!!!
+"""
+
+MIGRATION_INFO = """
+#############
+INFO: : {} {}'
+#############
+"""
 
 
 def init():
@@ -67,7 +82,7 @@ def revision(message):
     utils.message(msg)
 
 
-def upgrade(revisions):
+def run_migrations(revisions, action):
     config = ConfigParser.RawConfigParser()
     config.read(INI_PATH)
     db_uri = config.get(INI_SECTION, INI_DB_KEY)
@@ -76,16 +91,42 @@ def upgrade(revisions):
     filenames = os.listdir(REVISIONS_PATH)
     filename_numbers = {}
     for filename in filenames:
-        key = filename.split('-')[0]
-        filename_numbers[key] = filename
+        key = filename.split('_')[0]
+        filename_path = os.path.join(REVISIONS_PATH, filename)
+        filename_numbers[key] = filename_path
     revision_numbers = revisions.split(',')
-    #TODO: handle upgrade/downgrade
-    if True:
-        msg = 'Cannot find revisions: {}'.format(missing)
+
+    missing = []
+    for revision_number in revision_numbers:
+        if revision_number not in filename_numbers:
+            missing.append(revision_number)
+
+    if missing:
+        missing = ','.join(missing)
+        msg = CANNOT_FIND.format(missing)
         utils.message(msg)
-    else:
-        msg = '{} upgraded'.format(revisions)
-        utils.message(msg)
+        return
+    filename_paths = [filename_numbers[name] for name in revision_numbers]
+    for filename_path, revision in zip(filename_paths, revisions):
+        module = load_module(revision, filename_path)
+        getattr(module, action)()
+    
+
+def load_module(revision, path):
+    with open(path, 'rb') as f:
+        return imp.load_source(revision, path, f)
+
+
+def upgrade(revisions):
+    run_migrations(revisions, 'up')
+    msg = MIGRATION_INFO.format(revisions, 'upgraded')
+    utils.message(msg)
+
+
+def downgrade(revisions):
+    run_migrations(revisions, 'down')
+    msg = MIGRATION_INFO.format(revisions, 'downgraded')
+    utils.message(msg)
 
 
 def main():
@@ -101,12 +142,14 @@ def main():
         help='Create new revision with message',
         default=None
     )
-    subparsers.choices.get(PARSER_UPGRADE).add_argument(
-        '-r', '--revisions', dest='revisions',
-        help='Upgrades with provided revisions',
-        default=None
-    )
+    for migration_parser in MIGRATION_PARSERS:
+        subparsers.choices.get(migration_parser).add_argument(
+            '-r', '--revisions', dest='revisions',
+            help='Upgrades with provided revisions',
+            default=None
+        )
 
+    #TODO: prettify needed
     parsed_args = parser.parse_args()
     if parsed_args.which == PARSER_INIT:
         init()
@@ -114,6 +157,8 @@ def main():
         revision(parsed_args.message)
     elif parsed_args.which == PARSER_UPGRADE:
         upgrade(parsed_args.revisions)
+    elif parsed_args.which == PARSER_DOWNGRADE:
+        downgrade(parsed_args.revisions)
     else:
         msg = 'Please tell me what to do :)'
         utils.message(msg)
