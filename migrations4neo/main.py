@@ -43,8 +43,10 @@ INFO: : {} {}'
 """
 
 
-def init():
+def init(directory):
+    mig4neo_path = os.path.abspath(directory)
     for dir_path in FOLDER_PATHS:
+        dir_path = os.path.join(mig4neo_path, dir_path)
         if os.path.exists(dir_path):
             msg = 'Creating directory {}...already exists'.format(dir_path)
             utils.message(msg)
@@ -53,7 +55,8 @@ def init():
             msg = 'Creating directory {}...created'.format(dir_path)
             utils.message(msg)
 
-    if os.path.exists(INI_PATH):
+    ini_path = os.path.join(mig4neo_path, ini_path)
+    if os.path.exists(ini_path):
         msg = 'Generating ini file {}...already exists'.format(INI_PATH)
         utils.message(msg)
     else:
@@ -137,6 +140,10 @@ def main():
         _parser = subparsers.add_parser(parser_name)
         _parser.set_defaults(which=parser_name)
 
+    subparsers.choices.get(PARSER_INIT).add_argument(
+        'directory', help='Directory for migrations4neo',
+        default=MIG4NEO_DIR
+    )
     subparsers.choices.get(PARSER_REVISION).add_argument(
         '-m', '--message', type=str, dest='message',
         help='Create new revision with message',
@@ -152,7 +159,7 @@ def main():
     #TODO: prettify needed
     parsed_args = parser.parse_args()
     if parsed_args.which == PARSER_INIT:
-        init()
+        init(parsed_args.directory)
     elif parsed_args.which == PARSER_REVISION:
         revision(parsed_args.message)
     elif parsed_args.which == PARSER_UPGRADE:

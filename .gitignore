@@ -1,5 +1,8 @@
 *.pyc
 *.swp
 
+MANIFEST
+dist/
+
 env/
 migrations4neo/mig4neo/
