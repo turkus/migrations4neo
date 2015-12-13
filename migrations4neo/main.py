@@ -162,7 +162,3 @@ def main():
     else:
         msg = 'Please tell me what to do :)'
         utils.message(msg)
-
-
-if __name__ == '__main__':
-    main()
