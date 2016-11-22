@@ -1,9 +1,12 @@
+from __future__ import absolute_import, unicode_literals
+
 import binascii
-import ConfigParser
 import imp
 import os
 import argparse
 
+import six
+from six.moves.configparser import RawConfigParser
 from slugify import Slugify
 
 from . import package_dir
@@ -42,6 +45,8 @@ INFO: : {} {}'
 #############
 """
 
+file_open_mode = 'wb' if six.PY2 else 'w'
+
 
 def init(directory):
     mig4neo_path = os.path.abspath(directory)
@@ -55,17 +60,16 @@ def init(directory):
             msg = 'Creating directory {}...created'.format(dir_path)
             utils.message(msg)
 
-    ini_path = os.path.join(mig4neo_path, ini_path)
-    if os.path.exists(ini_path):
+    if os.path.exists(INI_PATH):
         msg = 'Generating ini file {}...already exists'.format(INI_PATH)
         utils.message(msg)
     else:
         db_uri = 'http://user:password@localhost:7474/db/data/'
-        config = ConfigParser.RawConfigParser()
+        config = RawConfigParser()
         config.add_section('mig4neo')
         config.set(INI_SECTION, INI_DB_KEY, db_uri)
 
-        with open(INI_PATH, 'wb') as ini_file:
+        with open(INI_PATH, file_open_mode) as ini_file:
             config.write(ini_file)
         msg = 'Generating ini file {}...created'.format(INI_PATH)
         utils.message(msg)
@@ -75,18 +79,18 @@ def revision(message):
     mag_slugify = Slugify(to_lower=True)
     mag_slugify.separator = '_'
     message = mag_slugify(message)
-    number = binascii.hexlify(os.urandom(5))
+    number = binascii.hexlify(os.urandom(5)).decode('utf8')
     revision_filename = '{}_{}.py'.format(number, message)
     revision_body = template.body.format(number)
     revision_path = os.path.join(REVISIONS_PATH, revision_filename)
-    with open(revision_path, 'wb') as revision_file:
+    with open(revision_path, file_open_mode) as revision_file:
         revision_file.write(revision_body)
     msg = 'Generating revision file {}...created'.format(revision_path)
     utils.message(msg)
 
 
 def run_migrations(revisions, action):
-    config = ConfigParser.RawConfigParser()
+    config = RawConfigParser()
     config.read(INI_PATH)
     db_uri = config.get(INI_SECTION, INI_DB_KEY)
     os.environ['NEO4J_REST_URL'] = db_uri
@@ -113,7 +117,7 @@ def run_migrations(revisions, action):
     for filename_path, revision in zip(filename_paths, revisions):
         module = load_module(revision, filename_path)
         getattr(module, action)()
-    
+
 
 def load_module(revision, path):
     with open(path, 'rb') as f:
@@ -156,7 +160,7 @@ def main():
             default=None
         )
 
-    #TODO: prettify needed
+    # TODO: prettify needed
     parsed_args = parser.parse_args()
     if parsed_args.which == PARSER_INIT:
         init(parsed_args.directory)
