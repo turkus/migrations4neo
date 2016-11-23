@@ -15,11 +15,11 @@ We need to create basics:
 
     mig4neo init mig4neo ./
 
-It will create `mig4neo` folder and subfolder called versions, where your migrations will land.
-You have to provide directory where `mig4neo` folder should be created.
+It will create ``mig4neo`` folder and subfolder called versions, where your migrations will land.
+You have to provide directory where ``mig4neo`` folder should be created.
 
-Then you have to edit `mig4neo.ini` according your needs.
-If necessary change its location. When do that just point where your `mig4neo.ini` lands
+Then you have to edit ``mig4neo.ini`` according your needs.
+If necessary change its location. When do that just point where your ``mig4neo.ini`` lands
 using config option:
 
 .. code-block:: console
