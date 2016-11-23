@@ -13,12 +13,18 @@ We need to create basics:
 
 .. code-block:: console
 
-    mig4neo init mig4neo
+    mig4neo init mig4neo ./
 
-It will create mig4neo folder and subfolder called versions, where your migrations will land.
+It will create `mig4neo` folder and subfolder called versions, where your migrations will land.
+You have to provide directory where `mig4neo` folder should be created.
 
-Then you have to edit mig4neo.ini according your needs:
-<path to your project dir>/mig4neo.ini
+Then you have to edit `mig4neo.ini` according your needs.
+If necessary change its location. When do that just point where your `mig4neo.ini` lands
+using config option:
+
+.. code-block:: console
+
+    mig4neo -c ../mig4neo.ini
 
 What's next?
 ------------
@@ -29,9 +35,14 @@ Create revision:
 
     mig4neo revision -m 'This is my revision'
   
+Then adjust it by editing revision's file (*.py).
 
+With config option:
 
-Adjust it by editing revision's file (*.py).
+.. code-block:: console
+
+    mig4neo -c ../mig4neo.ini revision -m 'This is my revision'
+
 
 Make it happen
 --------------
