@@ -1,19 +1,20 @@
 body = '''# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
+
 import os
 
 from py2neo import Graph
 
 graph = Graph(os.getenv('NEO4J_REST_URL'))
-cypher = graph.cypher
 
 
 # MIGRATION: {}
 
 
 def up():
-    cypher.execute(""" """)
+    graph.run(""" """)
 
 
 def down():
-    cypher.execute(""" """)
+    graph.run(""" """)
 '''
