@@ -29,7 +29,7 @@ REVISIONS_PATH = os.path.join(MIG4NEO_PATH, 'revisions')
 
 FOLDER_PATHS = [MIG4NEO_PATH, REVISIONS_PATH]
 
-INI_PATH = os.path.join(package_dir, MIG4NEO_DIR, 'mig4neo.ini')
+DEFAULT_INI_PATH = os.path.join(package_dir, MIG4NEO_DIR, 'mig4neo.ini')
 INI_SECTION = 'mig4neo'
 INI_DB_KEY = 'neo4j.db_uri'
 
@@ -45,10 +45,11 @@ INFO: : {} {}'
 #############
 """
 
+
 file_open_mode = 'wb' if six.PY2 else 'w'
 
 
-def init(directory):
+def init(directory, config_path):
     mig4neo_path = os.path.abspath(directory)
     for dir_path in FOLDER_PATHS:
         dir_path = os.path.join(mig4neo_path, dir_path)
@@ -60,8 +61,8 @@ def init(directory):
             msg = 'Creating directory {}...created'.format(dir_path)
             utils.message(msg)
 
-    if os.path.exists(INI_PATH):
-        msg = 'Generating ini file {}...already exists'.format(INI_PATH)
+    if os.path.exists(config_path):
+        msg = 'Generating ini file {}...already exists'.format(config_path)
         utils.message(msg)
     else:
         db_uri = 'http://user:password@localhost:7474/db/data/'
@@ -69,9 +70,9 @@ def init(directory):
         config.add_section('mig4neo')
         config.set(INI_SECTION, INI_DB_KEY, db_uri)
 
-        with open(INI_PATH, file_open_mode) as ini_file:
+        with open(config_path, file_open_mode) as ini_file:
             config.write(ini_file)
-        msg = 'Generating ini file {}...created'.format(INI_PATH)
+        msg = 'Generating ini file {}...created'.format(config_path)
         utils.message(msg)
 
 
@@ -89,9 +90,9 @@ def revision(message):
     utils.message(msg)
 
 
-def run_migrations(revisions, action):
+def run_migrations(revisions, action, config_path):
     config = RawConfigParser()
-    config.read(INI_PATH)
+    config.read(config_path)
     db_uri = config.get(INI_SECTION, INI_DB_KEY)
     os.environ['NEO4J_REST_URL'] = db_uri
 
@@ -124,14 +125,14 @@ def load_module(revision, path):
         return imp.load_source(revision, path, f)
 
 
-def upgrade(revisions):
-    run_migrations(revisions, 'up')
+def upgrade(revisions, config_path):
+    run_migrations(revisions, 'up', config_path=config_path)
     msg = MIGRATION_INFO.format(revisions, 'upgraded')
     utils.message(msg)
 
 
-def downgrade(revisions):
-    run_migrations(revisions, 'down')
+def downgrade(revisions, config_path):
+    run_migrations(revisions, 'down', config_path=config_path)
     msg = MIGRATION_INFO.format(revisions, 'downgraded')
     utils.message(msg)
 
@@ -144,6 +145,11 @@ def main():
         _parser = subparsers.add_parser(parser_name)
         _parser.set_defaults(which=parser_name)
 
+    parser.add_argument(
+        '-c', '--config', type=str, dest='configpath',
+        help='Path to config file',
+        default=None
+    )
     subparsers.choices.get(PARSER_INIT).add_argument(
         'directory', help='Directory for migrations4neo',
         default=MIG4NEO_DIR
@@ -162,14 +168,17 @@ def main():
 
     # TODO: prettify needed
     parsed_args = parser.parse_args()
+
+    config_path = parsed_args.configpath or DEFAULT_INI_PATH
+
     if parsed_args.which == PARSER_INIT:
-        init(parsed_args.directory)
+        init(directory=parsed_args.directory, config_path=config_path)
     elif parsed_args.which == PARSER_REVISION:
-        revision(parsed_args.message)
+        revision(message=parsed_args.message)
     elif parsed_args.which == PARSER_UPGRADE:
-        upgrade(parsed_args.revisions)
+        upgrade(revisions=parsed_args.revisions, config_path=config_path)
     elif parsed_args.which == PARSER_DOWNGRADE:
-        downgrade(parsed_args.revisions)
+        downgrade(revisions=parsed_args.revisions, config_path=config_path)
     else:
         msg = 'Please tell me what to do :)'
         utils.message(msg)
