@@ -1,9 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
+import argparse
 import binascii
 import imp
 import os
-import argparse
 
 import six
 from six.moves.configparser import RawConfigParser

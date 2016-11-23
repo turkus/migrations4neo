@@ -12,7 +12,7 @@ setup(
     author_email='wojciechrola@wp.pl',
     url='https://github.com/turkus/migrations4neo',
     download_url=(
-        'https://github.com/turkus/migrations4neo/tarball/'.format(version)
+        'https://github.com/turkus/migrations4neo/tarball/{}'.format(version)
     ),
     keywords=['neo4j', 'migrations'],
     entry_points={
